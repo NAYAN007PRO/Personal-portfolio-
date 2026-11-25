@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-11-25T17:19:31.553Z"
+    "updatedAt": "2026-11-25T17:47:24.416Z"
   },
   "branding": {
     "logoLetter": "N",
@@ -10,9 +10,9 @@
     "footerText": "© 2026 Nayan. All rights reserved."
   },
   "theme": {
-    "accentPrimary": "#0369A1",
-    "accentSecondary": "#0EA5E9",
-    "accentSoft": "#E0F2FE",
+    "accentPrimary": "#047857",
+    "accentSecondary": "#10B981",
+    "accentSoft": "#ECFDF5",
     "darkMode": false,
     "animationsEnabled": true,
     "animationSpeed": "normal",
