@@ -10,6 +10,9 @@ export const ACCENT_PRESETS = [
 ];
 
 export const DEFAULT_PORTFOLIO_DATA = {
+  meta: {
+    updatedAt: '2026-11-25T07:30:00.000Z',
+  },
   branding: {
     logoLetter: 'N',
     logoText: 'Nayan.',
@@ -178,6 +181,7 @@ export const DEFAULT_PORTFOLIO_DATA = {
     phone: '',
     location: 'Gujarat, India',
     availability: 'Open for Internships & Projects',
+    formEndpoint: '',
     socials: [
       {
         id: 'soc-github',

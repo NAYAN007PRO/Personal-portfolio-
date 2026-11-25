@@ -20,10 +20,21 @@ import {
   Download,
   Check,
   Sparkles,
+  CloudUpload,
+  RefreshCw,
+  Copy,
+  ExternalLink,
+  KeyRound,
+  AlertCircle,
+  Globe,
 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { ACCENT_PRESETS } from '../data/defaultPortfolioData';
 import { SKILL_ICON_OPTIONS, SkillIcon } from './SkillIcons';
+import {
+  generateDefaultDataModule,
+  sanitizePublicPortfolioData,
+} from '../utils/cloudSync';
 
 async function readAndResizeImageFile(file, maxDimension = 900) {
   return new Promise((resolve, reject) => {
@@ -117,11 +128,18 @@ export function AdminPanel() {
     deleteMessage,
     isAdminOpen,
     closeAdmin,
+    hasUnpublishedChanges,
+    syncCreds,
+    updateSyncCreds,
+    syncState,
+    publishLive,
+    refreshFromRemote,
   } = usePortfolio();
 
   const [activeTab, setActiveTab] = useState('general');
   const [confirmReset, setConfirmReset] = useState(false);
   const [statusToast, setStatusToast] = useState('');
+  const [publishResult, setPublishResult] = useState({ error: '', commitUrl: '' });
 
   useEffect(() => {
     if (!isAdminOpen) return;
@@ -148,8 +166,36 @@ export function AdminPanel() {
     { id: 'education', label: 'Education', icon: GraduationCap },
     { id: 'contact', label: 'Contact & Socials', icon: Mail },
     { id: 'messages', label: 'Messages', icon: Inbox, badge: unreadCount },
+    { id: 'publish', label: 'Publish Live', icon: CloudUpload, dot: hasUnpublishedChanges },
     { id: 'backup', label: 'Backup & Reset', icon: DatabaseBackup },
   ];
+
+  const handlePublishLive = async () => {
+    if (!syncCreds.token || !syncCreds.token.trim()) {
+      setActiveTab('publish');
+      notify('Add your GitHub token in Publish Live');
+      return;
+    }
+    setPublishResult({ error: '', commitUrl: '' });
+    try {
+      const res = await publishLive();
+      setPublishResult({ error: '', commitUrl: res.commitUrl || '' });
+      notify('Published live to all browsers!');
+    } catch (err) {
+      setPublishResult({ error: err.message || 'Publish failed', commitUrl: '' });
+      setActiveTab('publish');
+    }
+  };
+
+  const downloadFile = (filename, content, mime = 'application/json') => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const moveItem = (listKey, index, direction) => {
     updateData((prev) => {
@@ -234,13 +280,39 @@ export function AdminPanel() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 flex-wrap justify-end">
               {statusToast && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
                   <Check className="w-3.5 h-3.5" />
                   {statusToast}
                 </span>
               )}
+
+              <span
+                className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+                  hasUnpublishedChanges
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    hasUnpublishedChanges ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}
+                />
+                {hasUnpublishedChanges ? 'Unpublished draft' : 'Synced'}
+              </span>
+
+              <button
+                type="button"
+                disabled={syncState.publishing}
+                onClick={handlePublishLive}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 transition-colors cursor-pointer"
+              >
+                <CloudUpload className="w-4 h-4" />
+                <span>{syncState.publishing ? 'Publishing...' : 'Publish Live'}</span>
+              </button>
+
               <button
                 type="button"
                 onClick={closeAdmin}
@@ -282,6 +354,13 @@ export function AdminPanel() {
                       >
                         {tab.badge}
                       </span>
+                    )}
+                    {tab.dot && !tab.badge && (
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          active ? 'bg-amber-300' : 'bg-amber-500'
+                        }`}
+                      />
                     )}
                   </button>
                 );
@@ -1344,6 +1423,16 @@ export function AdminPanel() {
                         />
                       </Field>
                     </div>
+                    <Field
+                      label="Remote Contact Form Endpoint / Web3Forms Key (Optional)"
+                      hint="Paste a Web3Forms Access Key or Formspree URL so visitor messages from any browser arrive in your email."
+                    >
+                      <Input
+                        value={data.contact.formEndpoint}
+                        placeholder="e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx or https://formspree.io/f/..."
+                        onChange={(val) => updateSection('contact', { formEndpoint: val })}
+                      />
+                    </Field>
                   </div>
 
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
@@ -1512,6 +1601,220 @@ export function AdminPanel() {
                       </div>
                     ))
                   )}
+                </div>
+              )}
+
+              {/* TAB: PUBLISH LIVE */}
+              {activeTab === 'publish' && (
+                <div className="space-y-6 max-w-3xl">
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-display font-bold text-base flex items-center gap-2">
+                          <Globe className="w-4.5 h-4.5 text-blue-600" />
+                          Sync Across All Browsers & Devices
+                        </h3>
+                        <p className="text-sm text-slate-600 mt-1">
+                          Edits normally save only in your current browser&apos;s storage. Publishing updates{' '}
+                          <code className="px-1.5 py-0.5 rounded bg-slate-100 text-xs font-mono">
+                            public/portfolio-data.json
+                          </code>{' '}
+                          in your GitHub repository so every visitor and browser sees your latest changes automatically.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={syncState.loadingRemote}
+                        onClick={async () => {
+                          const ok = await refreshFromRemote(true);
+                          notify(ok ? 'Loaded latest live data' : 'Could not fetch remote data');
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-semibold cursor-pointer shrink-0"
+                      >
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 ${syncState.loadingRemote ? 'animate-spin' : ''}`}
+                        />
+                        <span>Pull Latest Live</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 text-xs text-slate-500 pt-1">
+                      <span>
+                        Source: <strong className="text-slate-700">{syncState.lastSource}</strong>
+                      </span>
+                      {syncState.lastPublishedAt && (
+                        <span>
+                          Last Published:{' '}
+                          <strong className="text-slate-700">
+                            {new Date(syncState.lastPublishedAt).toLocaleString()}
+                          </strong>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+                    <h3 className="font-display font-bold text-base flex items-center gap-2">
+                      <KeyRound className="w-4.5 h-4.5 text-blue-600" />
+                      Option 1: One-Click GitHub Live Publish
+                    </h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="GitHub Username">
+                        <Input
+                          value={syncCreds.owner}
+                          onChange={(val) => updateSyncCreds({ owner: val })}
+                        />
+                      </Field>
+                      <Field label="Repository Name">
+                        <Input
+                          value={syncCreds.repo}
+                          onChange={(val) => updateSyncCreds({ repo: val })}
+                        />
+                      </Field>
+                      <Field label="Branch">
+                        <Input
+                          value={syncCreds.branch}
+                          onChange={(val) => updateSyncCreds({ branch: val })}
+                        />
+                      </Field>
+                      <Field label="Data File Path">
+                        <Input
+                          value={syncCreds.path}
+                          onChange={(val) => updateSyncCreds({ path: val })}
+                        />
+                      </Field>
+                    </div>
+
+                    <Field
+                      label="GitHub Personal Access Token (Saved only in this browser)"
+                      hint="Create a Fine-grained token on GitHub scoped ONLY to Personal-portfolio- with Contents: Read and write."
+                    >
+                      <Input
+                        type="password"
+                        value={syncCreds.token}
+                        placeholder="github_pat_..."
+                        onChange={(val) => updateSyncCreds({ token: val })}
+                      />
+                    </Field>
+
+                    {(publishResult.error || syncState.error) && (
+                      <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{publishResult.error || syncState.error}</span>
+                      </div>
+                    )}
+
+                    {publishResult.commitUrl && (
+                      <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between gap-2">
+                        <span>Published live! Other browsers will now fetch this version automatically.</span>
+                        <a
+                          href={publishResult.commitUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-bold underline shrink-0"
+                        >
+                          View Commit
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-3 pt-1">
+                      <button
+                        type="button"
+                        disabled={syncState.publishing}
+                        onClick={handlePublishLive}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 cursor-pointer"
+                      >
+                        <CloudUpload className="w-4 h-4" />
+                        <span>
+                          {syncState.publishing
+                            ? 'Publishing to GitHub...'
+                            : 'Publish Live to All Browsers'}
+                        </span>
+                      </button>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs text-slate-600 space-y-1.5">
+                      <p className="font-bold text-slate-800">Quick 1-time GitHub token setup:</p>
+                      <p>1. Open GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens.</p>
+                      <p>2. Click Generate new token and select Only select repositories → Personal-portfolio-.</p>
+                      <p>3. Under Repository permissions, set Contents to Read and write, then generate &amp; paste it above.</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+                    <h3 className="font-display font-bold text-base">
+                      Option 2: Update Code Files Manually (No Token Needed)
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                      Download the updated{' '}
+                      <code className="px-1.5 py-0.5 rounded bg-slate-100 text-xs font-mono">
+                        portfolio-data.json
+                      </code>{' '}
+                      (into{' '}
+                      <code className="px-1.5 py-0.5 rounded bg-slate-100 text-xs font-mono">
+                        public/
+                      </code>
+                      ) or{' '}
+                      <code className="px-1.5 py-0.5 rounded bg-slate-100 text-xs font-mono">
+                        defaultPortfolioData.js
+                      </code>{' '}
+                      (into{' '}
+                      <code className="px-1.5 py-0.5 rounded bg-slate-100 text-xs font-mono">
+                        src/data/
+                      </code>
+                      ) and push to GitHub.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const clean = sanitizePublicPortfolioData(data);
+                          downloadFile(
+                            'portfolio-data.json',
+                            JSON.stringify(clean, null, 2)
+                          );
+                          notify('Downloaded portfolio-data.json');
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs sm:text-sm font-semibold hover:bg-slate-800 cursor-pointer"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download portfolio-data.json</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          downloadFile(
+                            'defaultPortfolioData.js',
+                            generateDefaultDataModule(data),
+                            'application/javascript'
+                          );
+                          notify('Downloaded defaultPortfolioData.js');
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs sm:text-sm font-semibold cursor-pointer"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download defaultPortfolioData.js</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(
+                            generateDefaultDataModule(data)
+                          );
+                          notify('Copied defaultPortfolioData.js');
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs sm:text-sm font-semibold cursor-pointer"
+                      >
+                        <Copy className="w-4 h-4" />
+                        <span>Copy JS Code</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 

@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { DEFAULT_PORTFOLIO_DATA, STORAGE_KEY } from '../data/defaultPortfolioData';
+import {
+  DEFAULT_SYNC_REPO,
+  fetchRemotePortfolioData,
+  loadSyncCredentials,
+  publishPortfolioToGitHub,
+  saveSyncCredentials,
+  sanitizePublicPortfolioData,
+} from '../utils/cloudSync';
 
+const DRAFT_STORAGE_KEY = 'nayan_portfolio_admin_draft_v1';
+const PUBLISHED_CACHE_KEY = 'nayan_portfolio_published_cache_v1';
+const MESSAGES_STORAGE_KEY = 'nayan_portfolio_messages_v1';
 const PortfolioContext = createContext(null);
 
 function deepMerge(defaults, stored) {
@@ -33,29 +44,105 @@ function deepMerge(defaults, stored) {
   return result;
 }
 
+function readJsonStorage(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function PortfolioProvider({ children }) {
-  const [data, setData] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        return deepMerge(DEFAULT_PORTFOLIO_DATA, JSON.parse(raw));
-      }
-    } catch {
-      // Fallback cleanly to defaults if storage is unavailable or corrupted
-    }
-    return DEFAULT_PORTFOLIO_DATA;
+  const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(() => {
+    return Boolean(readJsonStorage(DRAFT_STORAGE_KEY));
   });
 
+  const [data, setData] = useState(() => {
+    const savedMessages = readJsonStorage(MESSAGES_STORAGE_KEY) || [];
+    const draft = readJsonStorage(DRAFT_STORAGE_KEY);
+    if (draft) {
+      return { ...deepMerge(DEFAULT_PORTFOLIO_DATA, draft), messages: savedMessages };
+    }
+
+    const cached = readJsonStorage(PUBLISHED_CACHE_KEY);
+    if (cached) {
+      return { ...deepMerge(DEFAULT_PORTFOLIO_DATA, cached), messages: savedMessages };
+    }
+
+    const legacy = readJsonStorage(STORAGE_KEY);
+    if (legacy) {
+      return { ...deepMerge(DEFAULT_PORTFOLIO_DATA, legacy), messages: savedMessages };
+    }
+
+    return { ...DEFAULT_PORTFOLIO_DATA, messages: savedMessages };
+  });
+
+  const [syncCreds, setSyncCreds] = useState(() => loadSyncCredentials());
+  const [syncState, setSyncState] = useState({
+    loadingRemote: true,
+    publishing: false,
+    lastSource: 'default',
+    lastPublishedAt: data?.meta?.updatedAt || '',
+    error: '',
+  });
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      // Ignore quota errors cleanly
-    }
-  }, [data]);
+  // Pull latest published portfolio JSON on load for all browsers/devices
+  const refreshFromRemote = useCallback(
+    async (forceReplaceDraft = false) => {
+      setSyncState((prev) => ({ ...prev, loadingRemote: true, error: '' }));
+      const remote = await fetchRemotePortfolioData({
+        ...DEFAULT_SYNC_REPO,
+        owner: syncCreds.owner || DEFAULT_SYNC_REPO.owner,
+        repo: syncCreds.repo || DEFAULT_SYNC_REPO.repo,
+        branch: syncCreds.branch || DEFAULT_SYNC_REPO.branch,
+        path: syncCreds.path || DEFAULT_SYNC_REPO.path,
+      });
 
+      if (!remote) {
+        setSyncState((prev) => ({ ...prev, loadingRemote: false }));
+        return false;
+      }
+
+      const merged = deepMerge(DEFAULT_PORTFOLIO_DATA, remote.data);
+      try {
+        localStorage.setItem(PUBLISHED_CACHE_KEY, JSON.stringify(merged));
+      } catch {
+        // Ignore quota errors
+      }
+
+      const activeDraft = readJsonStorage(DRAFT_STORAGE_KEY);
+      if (!activeDraft || forceReplaceDraft) {
+        if (forceReplaceDraft) {
+          try {
+            localStorage.removeItem(DRAFT_STORAGE_KEY);
+            localStorage.removeItem(STORAGE_KEY);
+          } catch {
+            // Ignore
+          }
+          setHasUnpublishedChanges(false);
+        }
+        const savedMessages = readJsonStorage(MESSAGES_STORAGE_KEY) || [];
+        setData({ ...merged, messages: savedMessages });
+      }
+
+      setSyncState((prev) => ({
+        ...prev,
+        loadingRemote: false,
+        lastSource: remote.source,
+        lastPublishedAt: merged?.meta?.updatedAt || prev.lastPublishedAt,
+      }));
+      return true;
+    },
+    [syncCreds.branch, syncCreds.owner, syncCreds.path, syncCreds.repo]
+  );
+
+  useEffect(() => {
+    refreshFromRemote(false);
+  }, [refreshFromRemote]);
+
+  // Sync theme variables and browser title
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty('--accent-primary', data.theme.accentPrimary || '#0B52C4');
@@ -77,61 +164,156 @@ export function PortfolioProvider({ children }) {
     }
   }, [data.theme, data.branding?.pageTitle]);
 
-  const updateData = useCallback((updater) => {
-    setData((prev) => (typeof updater === 'function' ? updater(prev) : updater));
-  }, []);
-
-  const updateSection = useCallback((sectionKey, patch) => {
-    setData((prev) => ({
-      ...prev,
-      [sectionKey]: {
-        ...prev[sectionKey],
-        ...(typeof patch === 'function' ? patch(prev[sectionKey]) : patch),
-      },
-    }));
-  }, []);
-
-  const resetToDefaults = useCallback(() => {
-    setData(DEFAULT_PORTFOLIO_DATA);
+  const persistDraft = useCallback((nextData) => {
+    setHasUnpublishedChanges(true);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(nextData));
     } catch {
-      // Ignore
+      // Ignore quota errors
     }
   }, []);
 
-  const importData = useCallback((incoming) => {
-    const merged = deepMerge(DEFAULT_PORTFOLIO_DATA, incoming);
-    setData(merged);
+  const updateData = useCallback(
+    (updater) => {
+      setData((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater;
+        persistDraft(next);
+        return next;
+      });
+    },
+    [persistDraft]
+  );
+
+  const updateSection = useCallback(
+    (sectionKey, patch) => {
+      setData((prev) => {
+        const next = {
+          ...prev,
+          [sectionKey]: {
+            ...prev[sectionKey],
+            ...(typeof patch === 'function' ? patch(prev[sectionKey]) : patch),
+          },
+        };
+        persistDraft(next);
+        return next;
+      });
+    },
+    [persistDraft]
+  );
+
+  const updateSyncCreds = useCallback((patch) => {
+    setSyncCreds((prev) => {
+      const next = { ...prev, ...patch };
+      saveSyncCredentials(next);
+      return next;
+    });
   }, []);
 
-  const addMessage = useCallback((message) => {
-    const entry = {
-      id: `msg-${Date.now()}`,
-      ...message,
-      createdAt: new Date().toISOString(),
-      read: false,
-    };
-    setData((prev) => ({
-      ...prev,
-      messages: [entry, ...(prev.messages || [])],
-    }));
-  }, []);
+  const publishLive = useCallback(
+    async (overrideCreds) => {
+      const credsToUse = overrideCreds ? { ...syncCreds, ...overrideCreds } : syncCreds;
+      setSyncState((prev) => ({ ...prev, publishing: true, error: '' }));
+      try {
+        const result = await publishPortfolioToGitHub(data, credsToUse);
+        const publishedWithLocalMessages = {
+          ...result.publishedData,
+          messages: data.messages || [],
+        };
+        setData(publishedWithLocalMessages);
+        setHasUnpublishedChanges(false);
+        try {
+          localStorage.setItem(
+            PUBLISHED_CACHE_KEY,
+            JSON.stringify(result.publishedData)
+          );
+          localStorage.removeItem(DRAFT_STORAGE_KEY);
+          localStorage.removeItem(STORAGE_KEY);
+        } catch {
+          // Ignore
+        }
+        setSyncState((prev) => ({
+          ...prev,
+          publishing: false,
+          lastSource: 'github-api',
+          lastPublishedAt: result.publishedData.meta.updatedAt,
+          error: '',
+        }));
+        return result;
+      } catch (err) {
+        setSyncState((prev) => ({
+          ...prev,
+          publishing: false,
+          error: err.message || 'Publish failed',
+        }));
+        throw err;
+      }
+    },
+    [data, syncCreds]
+  );
+
+  const resetToDefaults = useCallback(() => {
+    const fresh = sanitizePublicPortfolioData(DEFAULT_PORTFOLIO_DATA);
+    setData(fresh);
+    persistDraft(fresh);
+  }, [persistDraft]);
+
+  const importData = useCallback(
+    (incoming) => {
+      const merged = deepMerge(DEFAULT_PORTFOLIO_DATA, incoming);
+      setData(merged);
+      persistDraft(merged);
+    },
+    [persistDraft]
+  );
+
+  const addMessage = useCallback(
+    (message) => {
+      const entry = {
+        id: `msg-${Date.now()}`,
+        ...message,
+        createdAt: new Date().toISOString(),
+        read: false,
+      };
+      setData((prev) => {
+        const nextMessages = [entry, ...(prev.messages || [])];
+        try {
+          localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(nextMessages));
+        } catch {
+          // Ignore
+        }
+        return {
+          ...prev,
+          messages: nextMessages,
+        };
+      });
+    },
+    []
+  );
 
   const markMessageRead = useCallback((id) => {
-    setData((prev) => ({
-      ...prev,
-      messages: (prev.messages || []).map((m) =>
+    setData((prev) => {
+      const nextMessages = (prev.messages || []).map((m) =>
         m.id === id ? { ...m, read: true } : m
-      ),
-    }));
+      );
+      try {
+        localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(nextMessages));
+      } catch {
+        // Ignore
+      }
+      return { ...prev, messages: nextMessages };
+    });
   }, []);
 
   const deleteMessage = useCallback((id) => {
-    setData((prev) => ({
-      ...prev,
-      messages: (prev.messages || []).filter((m) => m.id !== id),
-    }));
+    setData((prev) => {
+      const nextMessages = (prev.messages || []).filter((m) => m.id !== id);
+      try {
+        localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(nextMessages));
+      } catch {
+        // Ignore
+      }
+      return { ...prev, messages: nextMessages };
+    });
   }, []);
 
   const openAdmin = useCallback(() => setIsAdminOpen(true), []);
@@ -159,6 +341,12 @@ export function PortfolioProvider({ children }) {
         openAdmin,
         closeAdmin,
         speedMultiplier,
+        hasUnpublishedChanges,
+        syncCreds,
+        updateSyncCreds,
+        syncState,
+        publishLive,
+        refreshFromRemote,
       }}
     >
       {children}

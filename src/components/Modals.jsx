@@ -221,17 +221,56 @@ export function ContactFormModal({ isOpen, onClose }) {
   const { theme, contact } = data;
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.message.trim()) return;
+    setSendError('');
+
+    const endpoint = (contact.formEndpoint || '').trim();
+    if (endpoint) {
+      setSending(true);
+      try {
+        const isUrl = /^https?:\/\//i.test(endpoint);
+        const targetUrl = isUrl ? endpoint : 'https://api.web3forms.com/submit';
+        const bodyPayload = isUrl
+          ? form
+          : {
+              access_key: endpoint,
+              name: form.name,
+              email: form.email,
+              subject: form.subject || 'Portfolio Contact Message',
+              message: form.message,
+            };
+
+        const res = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(bodyPayload),
+        });
+        if (!res.ok) {
+          throw new Error('Could not send remotely right now.');
+        }
+      } catch (err) {
+        setSending(false);
+        setSendError(err.message || 'Remote delivery failed. You can also send via email.');
+        return;
+      }
+      setSending(false);
+    }
+
     addMessage(form);
     setSubmitted(true);
     setForm({ name: '', email: '', subject: '', message: '' });
     setTimeout(() => {
       setSubmitted(false);
       onClose();
-    }, 1800);
+    }, 2000);
   };
 
   return (
@@ -334,14 +373,38 @@ export function ContactFormModal({ isOpen, onClose }) {
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white shadow-md hover:opacity-95 transition-opacity cursor-pointer"
-              style={{ backgroundColor: theme.accentPrimary }}
-            >
-              <Send className="w-4 h-4" />
-              <span>Send Message</span>
-            </button>
+            {sendError && (
+              <p className="text-xs text-red-500 font-medium">{sendError}</p>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <button
+                type="submit"
+                disabled={sending}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white shadow-md hover:opacity-95 disabled:opacity-60 transition-opacity cursor-pointer"
+                style={{ backgroundColor: theme.accentPrimary }}
+              >
+                <Send className="w-4 h-4" />
+                <span>{sending ? 'Sending...' : 'Send Message'}</span>
+              </button>
+
+              {contact.email && (
+                <a
+                  href={`mailto:${contact.email}?subject=${encodeURIComponent(
+                    form.subject || 'Portfolio Inquiry'
+                  )}&body=${encodeURIComponent(
+                    `Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`
+                  )}`}
+                  className={`inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-semibold border transition-colors ${
+                    theme.darkMode
+                      ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                      : 'border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  Email App
+                </a>
+              )}
+            </div>
           </form>
         )}
       </div>
