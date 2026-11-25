@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-11-25T16:40:33.641Z"
+    "updatedAt": "2026-11-25T16:44:54.296Z"
   },
   "branding": {
     "logoLetter": "N",
@@ -214,53 +214,6 @@
       "githubUrl": "https://github.com/NAYAN007PRO/",
       "liveUrl": "",
       "featured": true
-    },
-    {
-      "id": "proj-2",
-      "title": "SPCE Study Hub",
-      "shortDescription": "A centralized academic notes and study resource platform tailored for Computer Engineering students.",
-      "fullDescription": "Full-stack web application powered by Python and Django with MySQL database integration. Enables semester-wise syllabus notes browsing, quick search filtering, and curated lab resources.",
-      "imageUrl": "/images/project-studyhub.jpg",
-      "tags": [
-        "Django",
-        "Python",
-        "MySQL",
-        "HTML"
-      ],
-      "githubUrl": "https://github.com/NAYAN007PRO/",
-      "liveUrl": "",
-      "featured": true
-    },
-    {
-      "id": "proj-3",
-      "title": "Student DBMS Portal",
-      "shortDescription": "Relational database management system for handling student attendance, grades, and academic records.",
-      "fullDescription": "Built using PHP, MySQL, and structured DBMS normalization principles with role-based access, clean query optimization, dynamic reporting tables, and an intuitive web dashboard.",
-      "imageUrl": "/images/project-dbms.jpg",
-      "tags": [
-        "PHP",
-        "MySQL",
-        "DBMS",
-        "JavaScript"
-      ],
-      "githubUrl": "https://github.com/NAYAN007PRO/",
-      "liveUrl": "",
-      "featured": true
-    },
-    {
-      "id": "proj-4",
-      "title": "Core Algorithms & OOP Toolkit",
-      "shortDescription": "Collection of data structures, sorting visualizers, and object-oriented utilities implemented in C, C++, and Java.",
-      "fullDescription": "Modular programming toolkit exploring linked lists, trees, graph traversals, memory management in C/C++, and clean object-oriented design patterns in Java.",
-      "imageUrl": "/images/project-portfolio.jpg",
-      "tags": [
-        "C",
-        "C++",
-        "Java"
-      ],
-      "githubUrl": "https://github.com/NAYAN007PRO/",
-      "liveUrl": "",
-      "featured": false
     }
   ],
   "educationSection": {
@@ -271,17 +224,17 @@
   "education": [
     {
       "id": "edu-1",
-      "degree": "B.E. / B.Tech in Computer Engineering",
+      "degree": "IMCA",
       "institution": "Sankalchand Patel College of Engineering (SPCE)",
-      "duration": "2023 – Present",
+      "duration": "2024 – 2029",
       "score": "Pursuing",
       "description": "Focusing on Data Structures, DBMS, Operating Systems, Object-Oriented Programming, and Full-Stack Web Engineering."
     },
     {
       "id": "edu-2",
-      "degree": "Higher Secondary Certificate (Science Stream)",
+      "degree": "12TH",
       "institution": "Gujarat Secondary & Higher Secondary Education Board",
-      "duration": "2021 – 2023",
+      "duration": "2023 – 2024",
       "score": "Completed",
       "description": "Strong foundation in Mathematics, Physics, and foundational computing concepts."
     }
@@ -290,7 +243,7 @@
     "title": "Let's Work Together",
     "subtitle": "Have an idea or just want to say hi? Feel free to reach out!",
     "ctaLabel": "Send Message",
-    "email": "nayanod@example.com",
+    "email": "nayanod178@gmail.com",
     "phone": "",
     "location": "Gujarat, India",
     "availability": "Open for Internships & Projects",
