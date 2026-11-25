@@ -1,0 +1,227 @@
+export const STORAGE_KEY = 'nayan_portfolio_data_v1';
+
+export const ACCENT_PRESETS = [
+  { name: 'Cobalt Blue', primary: '#0B52C4', secondary: '#1D6DF2', soft: '#EEF4FF' },
+  { name: 'Electric Indigo', primary: '#4338CA', secondary: '#6366F1', soft: '#EEF2FF' },
+  { name: 'Ocean Cyan', primary: '#0369A1', secondary: '#0EA5E9', soft: '#E0F2FE' },
+  { name: 'Emerald Tech', primary: '#047857', secondary: '#10B981', soft: '#ECFDF5' },
+  { name: 'Royal Violet', primary: '#6D28D9', secondary: '#8B5CF6', soft: '#F5F3FF' },
+  { name: 'Crimson Studio', primary: '#BE123C', secondary: '#F43F5E', soft: '#FFF1F2' },
+];
+
+export const DEFAULT_PORTFOLIO_DATA = {
+  branding: {
+    logoLetter: 'N',
+    logoText: 'Nayan.',
+    customLogoUrl: '',
+    pageTitle: 'Nayan. | Computer Engineering Student & Developer',
+    footerText: '© 2026 Nayan. All rights reserved.',
+  },
+  theme: {
+    accentPrimary: '#0B52C4',
+    accentSecondary: '#1D6DF2',
+    accentSoft: '#EEF4FF',
+    darkMode: false,
+    animationsEnabled: true,
+    animationSpeed: 'normal', // 'snappy' | 'normal' | 'relaxed'
+    showScrollProgress: true,
+  },
+  sections: {
+    hero: { visible: true, navLabel: 'Home' },
+    about: { visible: true, navLabel: 'About' },
+    skills: { visible: true, navLabel: 'Skills' },
+    projects: { visible: true, navLabel: 'Projects' },
+    education: { visible: true, navLabel: 'Education' },
+    contact: { visible: true, navLabel: 'Contact' },
+  },
+  hero: {
+    showBadge: true,
+    badgeText: 'Student at SPCE',
+    badgeDotColor: '#16A34A',
+    greeting: "Hey, I'm",
+    highlightName: 'Nayan.',
+    subtitle: 'A Computer Engineering Student',
+    description:
+      'Exploring technology, building innovative solutions, and learning every day to turn ideas into reality.',
+    primaryCtaLabel: 'Explore My Projects',
+    secondaryCtaLabel: 'Contact Me',
+    navCtaLabel: "Let's Talk",
+    heroImageUrl: '',
+    showFloatingLeaves: true,
+  },
+  about: {
+    eyebrow: 'About Me',
+    headingPrefix: 'Who Am ',
+    headingHighlight: 'I?',
+    shortBio:
+      "I'm a Computer Engineering student at Sankalchand Patel College of Engineering (SPCE), passionate about full-stack web development, databases, and exploring new technologies.",
+    extendedBio:
+      'I enjoy building clean, dependable software across the entire stack — from foundational problem-solving in C, C++, and Java to responsive user interfaces with React.js, HTML, CSS, and JavaScript, backed by Python, Django, PHP, MySQL, and solid DBMS architecture.',
+    ctaLabel: 'Learn More',
+    avatarUrl: '/images/avatar.jpg',
+    highlights: [
+      { id: 'hl-1', label: 'College', value: 'SPCE, Visnagar' },
+      { id: 'hl-2', label: 'Field', value: 'Computer Engineering' },
+      { id: 'hl-3', label: 'Focus', value: 'Full-Stack & DBMS' },
+      { id: 'hl-4', label: 'Status', value: 'Open to Opportunities' },
+    ],
+  },
+  skillsSection: {
+    eyebrow: 'My Skills',
+    title: 'Technologies I Work With',
+    showCategoryFilter: true,
+  },
+  skills: [
+    { id: 'skill-c', name: 'C', category: 'Languages', iconKey: 'c', level: 88, color: '#2563EB' },
+    { id: 'skill-cpp', name: 'C++', category: 'Languages', iconKey: 'cpp', level: 86, color: '#1D4ED8' },
+    { id: 'skill-js', name: 'JavaScript', category: 'Frontend', iconKey: 'js', level: 90, color: '#CA8A04' },
+    { id: 'skill-css', name: 'CSS', category: 'Frontend', iconKey: 'css', level: 92, color: '#2563EB' },
+    { id: 'skill-html', name: 'HTML', category: 'Frontend', iconKey: 'html', level: 95, color: '#EA580C' },
+    { id: 'skill-python', name: 'Python', category: 'Backend', iconKey: 'python', level: 89, color: '#2563EB' },
+    { id: 'skill-java', name: 'Java', category: 'Languages', iconKey: 'java', level: 84, color: '#DC2626' },
+    { id: 'skill-php', name: 'PHP', category: 'Backend', iconKey: 'php', level: 82, color: '#4F46E5' },
+    { id: 'skill-mysql', name: 'MySQL', category: 'Database', iconKey: 'mysql', level: 88, color: '#0284C7' },
+    { id: 'skill-dbms', name: 'DBMS', category: 'Database', iconKey: 'dbms', level: 87, color: '#0F766E' },
+    { id: 'skill-react', name: 'React.js', category: 'Frontend', iconKey: 'react', level: 90, color: '#0891B2' },
+    { id: 'skill-django', name: 'Django', category: 'Backend', iconKey: 'django', level: 85, color: '#15803D' },
+  ],
+  projectsSection: {
+    eyebrow: 'My Projects',
+    title: 'Some of My Projects',
+    subtitle: 'A glimpse of my work and creations.',
+    viewAllLabel: 'View All Projects',
+  },
+  projects: [
+    {
+      id: 'proj-1',
+      title: 'Personal Portfolio Website',
+      shortDescription:
+        'A modern, animated and responsive portfolio website built with React.js to showcase my skills and projects.',
+      fullDescription:
+        'Designed and engineered an interactive personal portfolio featuring fluid scroll animations, responsive layouts, customizable themes, project showcase modals, and a built-in content editor for seamless updates.',
+      imageUrl: '/images/project-portfolio.jpg',
+      tags: ['React.js', 'CSS', 'JavaScript', 'HTML'],
+      githubUrl: 'https://github.com/NAYAN007PRO/',
+      liveUrl: '',
+      featured: true,
+    },
+    {
+      id: 'proj-2',
+      title: 'SPCE Study Hub',
+      shortDescription:
+        'A centralized academic notes and study resource platform tailored for Computer Engineering students.',
+      fullDescription:
+        'Full-stack web application powered by Python and Django with MySQL database integration. Enables semester-wise syllabus notes browsing, quick search filtering, and curated lab resources.',
+      imageUrl: '/images/project-studyhub.jpg',
+      tags: ['Django', 'Python', 'MySQL', 'HTML'],
+      githubUrl: 'https://github.com/NAYAN007PRO/',
+      liveUrl: '',
+      featured: true,
+    },
+    {
+      id: 'proj-3',
+      title: 'Student DBMS Portal',
+      shortDescription:
+        'Relational database management system for handling student attendance, grades, and academic records.',
+      fullDescription:
+        'Built using PHP, MySQL, and structured DBMS normalization principles with role-based access, clean query optimization, dynamic reporting tables, and an intuitive web dashboard.',
+      imageUrl: '/images/project-dbms.jpg',
+      tags: ['PHP', 'MySQL', 'DBMS', 'JavaScript'],
+      githubUrl: 'https://github.com/NAYAN007PRO/',
+      liveUrl: '',
+      featured: true,
+    },
+    {
+      id: 'proj-4',
+      title: 'Core Algorithms & OOP Toolkit',
+      shortDescription:
+        'Collection of data structures, sorting visualizers, and object-oriented utilities implemented in C, C++, and Java.',
+      fullDescription:
+        'Modular programming toolkit exploring linked lists, trees, graph traversals, memory management in C/C++, and clean object-oriented design patterns in Java.',
+      imageUrl: '/images/project-portfolio.jpg',
+      tags: ['C', 'C++', 'Java'],
+      githubUrl: 'https://github.com/NAYAN007PRO/',
+      liveUrl: '',
+      featured: false,
+    },
+  ],
+  educationSection: {
+    eyebrow: 'Education',
+    title: 'Academic Background',
+    subtitle: 'Where I build my engineering foundations.',
+  },
+  education: [
+    {
+      id: 'edu-1',
+      degree: 'B.E. / B.Tech in Computer Engineering',
+      institution: 'Sankalchand Patel College of Engineering (SPCE)',
+      duration: '2023 – Present',
+      score: 'Pursuing',
+      description:
+        'Focusing on Data Structures, DBMS, Operating Systems, Object-Oriented Programming, and Full-Stack Web Engineering.',
+    },
+    {
+      id: 'edu-2',
+      degree: 'Higher Secondary Certificate (Science Stream)',
+      institution: 'Gujarat Secondary & Higher Secondary Education Board',
+      duration: '2021 – 2023',
+      score: 'Completed',
+      description:
+        'Strong foundation in Mathematics, Physics, and foundational computing concepts.',
+    },
+  ],
+  contact: {
+    title: "Let's Work Together",
+    subtitle: 'Have an idea or just want to say hi? Feel free to reach out!',
+    ctaLabel: 'Send Message',
+    email: 'nayanod@example.com',
+    phone: '',
+    location: 'Gujarat, India',
+    availability: 'Open for Internships & Projects',
+    socials: [
+      {
+        id: 'soc-github',
+        platform: 'github',
+        label: 'GitHub',
+        url: 'https://github.com/NAYAN007PRO/',
+        enabled: true,
+      },
+      {
+        id: 'soc-linkedin',
+        platform: 'linkedin',
+        label: 'LinkedIn',
+        url: 'https://www.linkedin.com/in/nayan-od-220b23420',
+        enabled: true,
+      },
+      {
+        id: 'soc-youtube',
+        platform: 'youtube',
+        label: 'YouTube',
+        url: '',
+        enabled: false,
+      },
+      {
+        id: 'soc-instagram',
+        platform: 'instagram',
+        label: 'Instagram',
+        url: '',
+        enabled: false,
+      },
+      {
+        id: 'soc-twitter',
+        platform: 'twitter',
+        label: 'X / Twitter',
+        url: '',
+        enabled: false,
+      },
+      {
+        id: 'soc-website',
+        platform: 'website',
+        label: 'Website',
+        url: '',
+        enabled: false,
+      },
+    ],
+  },
+  messages: [],
+};
