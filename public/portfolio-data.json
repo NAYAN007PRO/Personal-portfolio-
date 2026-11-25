@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-11-25T17:14:41.891Z"
+    "updatedAt": "2026-11-25T17:19:31.553Z"
   },
   "branding": {
     "logoLetter": "N",
@@ -199,6 +199,20 @@
     "viewAllLabel": "View All Projects"
   },
   "projects": [
+    {
+      "id": "proj-1795627143921",
+      "title": "New Project",
+      "shortDescription": "Describe your project concisely here.",
+      "fullDescription": "Full details about architecture and goals.",
+      "imageUrl": "/images/project-portfolio.jpg",
+      "tags": [
+        "React.js",
+        "Python"
+      ],
+      "githubUrl": "https://github.com/NAYAN007PRO/",
+      "liveUrl": "",
+      "featured": true
+    },
     {
       "id": "proj-1",
       "title": "Personal Portfolio Website",
