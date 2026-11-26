@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-11-25T18:11:30.099Z"
+    "updatedAt": "2026-11-26T03:01:49.564Z"
   },
   "branding": {
     "logoLetter": "N",
@@ -15,7 +15,7 @@
     "accentSoft": "#ECFDF5",
     "darkMode": false,
     "animationsEnabled": true,
-    "animationSpeed": "normal",
+    "animationSpeed": "relaxed",
     "showScrollProgress": true
   },
   "sections": {
