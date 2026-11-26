@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-11-26T03:01:49.564Z"
+    "updatedAt": "2026-11-26T04:35:38.743Z"
   },
   "branding": {
     "logoLetter": "N",
@@ -10,12 +10,12 @@
     "footerText": "© 2026 Nayan. All rights reserved."
   },
   "theme": {
-    "accentPrimary": "#047857",
-    "accentSecondary": "#10B981",
-    "accentSoft": "#ECFDF5",
-    "darkMode": false,
+    "accentPrimary": "#0B52C4",
+    "accentSecondary": "#1D6DF2",
+    "accentSoft": "#EEF4FF",
+    "darkMode": true,
     "animationsEnabled": true,
-    "animationSpeed": "relaxed",
+    "animationSpeed": "snappy",
     "showScrollProgress": true
   },
   "sections": {
@@ -258,7 +258,7 @@
     "subtitle": "Have an idea or just want to say hi? Feel free to reach out!",
     "ctaLabel": "Send Message",
     "email": "nayanod178@gmail.com",
-    "phone": "",
+    "phone": "9016940284",
     "location": "Gujarat, India",
     "availability": "Open for Internships & Projects",
     "formEndpoint": "",
