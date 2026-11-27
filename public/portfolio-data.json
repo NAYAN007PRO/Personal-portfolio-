@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updatedAt": "2026-11-27T05:34:44.106Z"
+    "updatedAt": "2026-11-27T06:48:02.161Z"
   },
   "branding": {
     "logoLetter": "N",
@@ -199,6 +199,28 @@
     "viewAllLabel": "View All Projects"
   },
   "projects": [
+    {
+      "id": "proj-1795758000631",
+      "title": "AI-Powered Plant Disease Prediction & Intelligent Crop Advisory System",
+      "shortDescription": "Describe your project concisely here.",
+      "fullDescription": "Full details about architecture and goals.",
+      "imageUrl": "/images/project-portfolio.jpg",
+      "tags": [
+        "Artificial Intelligence",
+        "Machine Learning",
+        "Deep Learning",
+        "Python",
+        "FastAPI",
+        "React Native",
+        "MobileNetV2",
+        "Computer Vision",
+        "Plant Disease Detection",
+        "Agriculture"
+      ],
+      "githubUrl": "https://github.com/NAYAN007PRO/",
+      "liveUrl": "",
+      "featured": true
+    },
     {
       "id": "proj-1795757364395",
       "title": "Ruled Based chatbot ",
